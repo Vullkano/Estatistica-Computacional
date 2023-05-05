@@ -1,0 +1,175 @@
+---
+title: "Exame_Prático"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-11-03"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+##### Dados Iniciais
+```{r}
+nreplica <- 104841
+pe_a <- 1
+pe_b <- 4
+pe_c <- 8
+
+npac <- 104841%%2000
+nvis <- ceiling(nreplica*1.5)
+```
+
+##### Enunciado
+
+Devido às condições económicas de um determinado país, onde a subida de preços está a retirar poder de compra às famílias, uma determinada associação conseguiu angariar o apoio de três grandes grupos de distribuição (A, B e C) para fornecimento de frescos (a integrar cabazes básicos que serão entregues pela associação às famílias do programa de apoio). 
+
+Um dos voluntários está encarregue de monitorizar a qualidade dos pacotes de produtos frescos entregues, e classifica os pacotes de produtos em duas categorias: 
+    1 - para entrega às famílias e 
+    0 - para compostagem.
+
+
+Assim, cada pacote pode ser classificado segundo duas vertentes: Origem (A, B ou C) e Estado (1 ou 0). 
+
+Considere então a experiência aleatória que consiste em observar um pacote de frescos e proceder a esta dupla classificação (origem, estado).
+
+#### 1.a)
+
+```{r}
+Origem <- c("A","B","C")
+Estado <- c(1,2)
+
+Origem_Estado <- expand.grid("Origem"=Origem,"Estado"=Estado)
+Origem_Estado
+```
+
+#### 1.b)
+
+```{r}
+Prob = c((1-pe_a/100)*0.2, (1-pe_b/100)*0.4, (1-pe_c/100)*0.4, (pe_a/100)*0.2, (pe_b/100)*0.4, (pe_c/100)*0.4)
+Origem_Estado <- data.frame(Origem_Estado, "Prob" = Prob)
+Origem_Estado
+```
+
+#### 1.c)
+
+```{r}
+rbinom(length(Origem_Estado),20,Prob)
+```
+
+## GRUPO B (6 valores)
+Uma determinada empresa é especialista na recolha de preços. Esta empresa recolhe preços e tem dois serviços principais: divulgação de preços para comparações online e fornecimento de pacotes de preços a especialistas que analisam a inflação. 
+
+Para a divulgação de preços para comparações online, a empresa usa um site. 
+
+Sabe-se que o valor que a empresa recebe, em euros, por cada visita ao site segue uma distribuição normal com valor médio 0.5 € e variância 0.2. 
+
+Já relativamente aos pacotes de preços fornecidos a especialistas, a empresa sabe que o valor que recebe por cada pacote fornecido, em euros, segue uma distribuição normal de valor médio 500 e variância 100.
+
+Considere que em certo mês, m, a empresa tem **nvis** visitas e vende **npac** pacotes de preços.
+
+### a. Calcule os parâmetros caracterizadores da variável Xm – valor recebido no mês m. Represente graficamente a função densidade de Xm.
+
+```{r}
+Site <- c(0.5*nvis, sqrt(0.2)*sqrt(nvis))
+Pacote <- c(500*npac, sqrt(100)*sqrt(npac))
+
+Xm <- c(Site[1]+Pacote[1], sqrt(Site[2]^2 + Pacote[2]^2))
+
+x <- (497500:500500)
+# dnorm(x, mean = Xm[1], sd = Xm[2])
+plot(x, dnorm(x, mean=Xm[1], sd=Xm[2]), type = "l", ylab = "", lwd = 2, col = "darkblue")
+```
+
+### b. Calcule o quantil de probabilidade 0.9 dessa distribuição. Represente a área em causa no gráfico.
+
+```{r}
+eixo_x<-c(497500,500500)
+eixo_y<-c(0,dnorm(0))
+
+plot(x, dnorm(x, mean=Xm[1], sd=Xm[2]), type = "l", ylab = "", lwd = 2, col = "darkblue")
+
+# Add x and y-axis lines
+abline(h = 0, col="grey")
+abline(v = 0, col = "black", lty=2, lwd=2)
+abline(v = qnorm(0.9, mean = Xm[1], sd = Xm[2]), col = "red", lty=2, lwd=2)
+
+#marcar a área
+
+x1 <- seq(498000,qnorm(0.9, mean = Xm[1], sd = Xm[2]),0.01)
+y1 <- dnorm(x1, mean=Xm[1], sd=Xm[2])
+
+coord_x <- c(498000,x1,qnorm(0.9, mean = Xm[1], sd = Xm[2]))
+coord_y <- c(0,y1,0)
+polygon(coord_x,coord_y,col='blue4')
+
+```
+
+### c. Gere **nreplica** observações aleatórias da variável Xm e use essa simulação para obter um valor aproximado para o quantil referido na alínea anterior.
+
+```{r}
+y_replica <- rnorm(nreplica, mean = Xm[1], sd = Xm[2])
+quantile(y_replica, 0.9)
+```
+
+## GRUPO C (5 valores)
+
+Considere os dados em "Estudo_Oculos_Sol.rds", utilizados nos últimos TPC. 
+
+### a. Obtenha uma coluna adicional no dataframe que tenha o valor “Sup” caso o nível educacional seja “Tertiary” e “No Sup” caso contrário.
+
+```{r}
+def <- readRDS("Estudo_Oculos_Sol.rds")
+def
+
+def$exe.a <- ifelse(def$educ == "Tertiary", "Sup", "No Sup")
+def$exe.a
+```
+
+### b. 
+Teste se os dois grupos acima definidos diferem quanto à importância concedida, em termos médios, à Qualidade dos óculos de sol.
+
+```{r}
+sup_gosto <- def$Quality[which(def$exe.a=="Sup")]
+no_sup_gosto <- def$Quality[which(def$exe.a=="No Sup")]
+
+mean(sup_gosto)
+mean(no_sup_gosto)
+
+t.test(sup_gosto,no_sup_gosto, alternative = "two.sided", var.equal = TRUE)
+
+cat("As médias destes dois não diferem muito, tendo uma diferença de:", sep = " ", mean(sup_gosto) - mean(no_sup_gosto))
+```
+
+### c. Teste se existe relacionamento entre ter ou não nível de educação superior (a variável que criou em a) e a possibilidade de vir a comprar óculos RB (will_buy_RB). Caso o relacionamento seja significativo, obtenha uma representação gráfica adequada.
+
+```{r}
+chisq.test(def$exe.a, def$Will_buy_RB)
+```
+
+Considerando que p-valores abaixo de 0.05 são significativos, existe evidências o suficiente para afirmar que estas 2 variaveis possuem alguma relação
+
+```{r}
+library("viridis")
+
+# tab1 <- table(def$exe.a, def$Will_buy_RB)
+tab1 <- table(def$Will_buy_RB, def$exe.a)
+
+tab1_prop <- prop.table(tab1,margin = 2)
+cores<-viridis(4)
+plot(1,
+xlim = c(0,3.5), ylim = c(0,1),
+type = "n", # vazio
+main = "São da marca SoleMio? : repartição por Estilos", # título
+ylab = "", xlab = "", # sem nomes
+xaxt = "n") # sem marcas eixo x
+barplot(tab1_prop, # att dados org em colunas
+col = cores, # cores a usar
+width = 0.8, # largura das barras
+# para dar espaço p legenda
+add=TRUE)
+legend("topright",
+legend = rownames(tab1_prop),
+pch = 15,
+col = cores)
+```
+

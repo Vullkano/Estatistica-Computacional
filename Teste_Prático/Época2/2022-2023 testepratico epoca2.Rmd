@@ -1,0 +1,330 @@
+---
+title: "Teste Prático Época 2"
+author: "Diogo Alexandre Alonso de Freitas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Enunciado
+
+
+### Ponto prévio
+
+1. Definir a variável **nfish**, igual ao valor que se obtém somando 20 ao resto da divisão inteira do vosso número de aluno por 10.
+
+```{r}
+nfish = (20 + (104841 %% 10))
+```
+
+2. Definir as variáveis **pa** e **pb** da seguinte forma:
+
+    Seja a – o primeiro dígito diferente de 0, a contar a partir da direita no vosso número de aluno 
+
+    e b – o segundo dígito diferente de 0, a contar a partir da direita no vosso número de aluno.
+
+    Então, pa = max (a,b)+2 	e 	pb = min (a,b)+1 
+
+```{r}
+a <- 1
+b <- 4
+
+pa = max(a,b) + 2
+pb = min (a,b) + 1
+```
+
+
+3. definir **n1**, **n2** e **n3** da seguinte forma: 
+
+    n1 obtém-se somando 2 ao resto da divisão inteira do vosso número de aluno por 3
+
+    n2 obtém-se pelo quociente da divisão inteira do vosso número de aluno por 10000
+
+    n3 obtém-se somando 3 ao resto da divisão inteira do vosso número de aluno por 3
+
+```{r}
+n1 <- 2 + (104841 %% 3)
+n2 <- 104841 %/% 10000
+n3 <- 3 + (104841 %% 3)
+```
+
+
+4. Finalmente, a variável **nreplica** será igual ao vosso número de aluno.
+
+```{r}
+nreplica <- 104841
+```
+
+
+### GRUPO 1 (6 valores). 
+
+O cutefish existente numa certa barragem é identificado por 30% de cutefish dourado e 70% de cutefish prateado. Da experiência passada, sabe-se que 50% de cutefish dourado nessa barragem tem peso inferior ao estabelecido nos regulamentos de pesca desportiva, enquanto que, no cutefish prateado, esse valor é de 40%.
+
+Assim, cada cutefish pode ser classificado segundo duas vertentes: a sua subespécie (D – dourado ou P – prateado) e o escalão em termos de peso (I – inferior ao regulamento ou R – não inferior ao regulamento).
+
+### 1.1.	
+
+Considere a experiência aleatória que consiste em capturar um cutefish e registar a sua subespécie e escalão.
+
+
+#### 1.1.1.	
+
+Construa um dataframe que contenha todos os possíveis resultados da experiência aleatória descrita.
+
+#### 1.1.2.	
+
+Adicione ao dataframe que construiu na alínea anterior uma coluna, “prob”, com a probabilidade de ocorrência de cada um dos resultados. As probabilidades referidas têm de ser calculadas a partir dos valores acima fornecidos; a mera indicação das probabilidades, sem a sua derivação a partir dos dados fornecidos, será severamente penalizada.
+
+
+#### 1.1.3.	
+
+Mostre o dataframe construído
+
+
+```{r}
+# Resolução de 1.1
+
+# 1.1.1
+peixe <- c("D","P")
+escalao_peso <- c("I","R")
+tabela_pei <- expand.grid(peixe,escalao_peso)
+tabela_pei
+
+
+# 1.1.2
+# verificar
+con_d <- 50/100
+con_p <- 40/100
+
+prob_peso_s_pei<-c(.3,.7)
+
+prob_d<-c(1-con_d,con_d)
+prob_p<-c(1-con_p,con_p)
+
+prob1<-rbind(prob_d,prob_p)
+prob2<-prob_peso_s_pei*prob1
+
+tabela_pei$prob <- c(prob2[,1],prob2[,2])
+
+# 1.1.3
+tabela_pei
+
+```
+
+
+
+### 1.2. 
+
+Admita que um certo pescador desportivo, durante uma competição, conseguiu capturar **nfish** cutefish. 
+
+#### 1.2.1.
+
+Obtenha uma simulação da pescaria desse pescador, que respeite as condições de ocorrência indicadas. 
+
+NOTA: caso **não** tenha conseguido fazer a alínea 1.1.2, construe um vetor “prob” **com a estrutura adequada**, e use-o quando necessário na resolução desta questão 1.2. Caso o faça, identifique claramente a sua opção
+
+#### 1.2.2.	
+
+Qual a percentagem de cutefish dourados no resultado da competição desse pescador?
+
+#### 1.2.3.	
+
+Na competição em causa, a cada peixe com peso **não inferior** ao regulamentado é atribuída uma pontuação de **pa pontos positivos** e a cada peixe com peso **inferior** ao regulamentado é atribuída uma pontuação de **pb pontos negativos**. 
+
+Na simulação obtida, calcule a pontuação do pescador. Quantos pontos conseguiu ele arrecadar, em média, por cada cutefish capturado?
+
+
+```{r}
+# Resolução de 1.2
+
+# 1.2.1
+simul1<-sample(1:nrow(tabela_pei),nfish,replace=TRUE,prob=tabela_pei$prob)
+simul2<-tabela_pei[simul1,1:2]
+
+# 1.2.2
+total_d <- length(which(simul2$Var1=="D")) 
+per_d <- total_d/nrow(simul2)*100
+
+# 1.2.3
+pontos <- ifelse(simul2$Var2=="R",pa,pb)
+sum_pontos <- sum(pontos)
+sum_pontos
+media_pon <- sum_pontos/length(pontos)
+```
+
+> O pescador conseguiu arrecadar em média $`r round(media_pon,2)`$ pontos por peixe capturado.
+
+## GRUPO 2 (6 valores)
+
+Um utilizador submete pedidos a um servidor de base de Dados, que só podem ser de 3 tipos: query, add/modify e delete.
+
+O tempo de execução desses pedidos pode ser modelizado por distribuições Normais, com médias de 100 milissegundos para uma query, 200 milissegundos para um add/modify e 220 milissegundos para um delete sendo os desvios-padrão de 10 milissegundos para uma query e 30 milissegundos quer no caso de um add/modify, quer no caso de um delete.
+
+Um utilizador irá submeter, em sequência, **n1** pedidos de query, **n2** add/modify e **n3** pedidos delete. Admite-se a independência dos pedidos.
+
+
+### 2.1. 
+
+Calcule os parâmetros caracterizadores da variável XT – Tempo total (em milissegundos) da sequência. Represente graficamente a função densidade de XT.
+
+```{r}
+# Resolução de 2.1
+query <- c(100, 10)
+add_modify <- c(200, 30)
+delete <- c(220, 30)
+
+queryN1 <- c(100*n1, 10*sqrt(n1))
+add_modifyN2 <- c(200*n2, 30*sqrt(n2))
+deleteN3 <- c(220*n3, 30*sqrt(n3))
+
+XT <- c(queryN1[1]+add_modifyN2[1]+deleteN3[1], sqrt(queryN1[2]^2 + add_modifyN2[2]^2 + deleteN3[2]^2))
+
+x <- (2400:3300)
+
+plot(x, dnorm(x, mean=XT[1], sd=XT[2]), type = "l", main = "XT- Tempo total (em milissegundos)", 
+     ylab = "f.d.p",lwd = 2, col = "darkblue")
+```
+
+
+### 2.2. 
+
+Calcule a probabilidade do tempo total de execução dos pedidos ser pelo menos 3000 milissegundos. Represente a área em causa no gráfico.
+
+```{r}
+# Verificar
+# Resolução de 2.2
+
+eixo_x<-c(2400:3300)
+eixo_y<-c(0,dnorm(0))
+
+plot(x, dnorm(x, mean=XT[1], sd=XT[2]), type = "l", main = "XT- Tempo total (em milissegundos)", 
+     ylab = "f.d.p",lwd = 2, col = "darkblue")
+
+# Add x and y-axis lines
+abline(h = 0, col="grey")
+abline(v = 0, col = "black", lty=2, lwd=2)
+abline(v = qnorm(0.9, mean = XT[1], sd = XT[2]), col = "red", lty=2, lwd=2)
+
+#marcar a área
+
+x1 <- seq(2400,qnorm(0.9, mean = XT[1], sd = XT[2]),0.01)
+y1 <- dnorm(x1, mean=XT[1], sd=XT[2])
+
+coord_x <- c(2400,x1,qnorm(0.9, mean = XT[1], sd = XT[2]))
+coord_y <- c(0,y1,0)
+polygon(coord_x,coord_y,col='blue4')
+
+```
+
+### 2.3. 
+
+Gere **nreplica** observações aleatórias da variável XT e use essa simulação para obter um valor aproximado para a probabilidade referida na alínea anterior.
+
+```{r}
+# Resolução de 2.3
+# 2.3
+
+y_replica <- rnorm(nreplica, mean = XT[1], sd = XT[2])
+quantile(y_replica, 0.9)
+```
+
+## GRUPO 3 (5 valores)
+
+Considere os dados em "Estudo_Oculos_Sol.rds", utilizados nos últimos TPC. 
+
+### 3.1. 
+
+Teste se a importância média concedida ao preço (variável “Price”) é menor para os que possuem óculos da marca RB (are_RB=”Yes”) do que para os que não possuem (are_RB=”No”). 
+
+```{r}
+# Resolução de 3.1
+def <- readRDS("Estudo_Oculos_Sol.rds")
+# def
+
+Marca <- def$Price[which(def$are_RB=="Yes")]
+NaoMarca <- def$Price[which(def$are_RB=="No")]
+
+mean(Marca)
+mean(NaoMarca)
+
+cat("As médias destes dois não diferem muito, tendo uma diferença de:", sep = " ", mean(NaoMarca) - mean(Marca))
+
+# Mas aplicando um t.test, podemos visualizar o seguinte:
+
+t.test(Marca,NaoMarca, alternative = "two.sided", var.equal = TRUE)
+
+# p-value > 0.05, logo, rejeita-se a hipótese nula, ou seja, realmente as pessoas que possuem oculos de marca dão importância ao preço
+```
+
+
+### 3.2. 
+
+Obtenha uma coluna adicional (glasses_type) no dataframe que resulte da recodificação da variável “type” (tipo dos óculos de sol) da seguinte forma: manter os níveis “Classic” e “Modern” e agrupar os restantes níveis (“Sport style” e “Futuristic”) num novo nível, “Other”. Mostre a distribuição de frequências absolutas da variável original e da variável recodificada.
+
+Hint: dplyr::recode.
+
+```{r}
+# Resolução de 3.2
+library(dplyr)
+def$glasses_type <- def$type
+def <- def %>% mutate(glasses_type=recode(glasses_type,"Sport style" = "Other", "Futuristic" = "Other"))
+
+```
+
+```{r}
+Futuristic <- ifelse(def$type=="Futuristic", 1, 0)
+Futuristic <- sum(Futuristic)
+
+Classic <- ifelse(def$type=="Classic", 1, 0)
+Classic <- sum(Classic)
+
+Sport_style <- ifelse(def$type=="Sport style", 1, 0)
+Sport_style <- sum(Sport_style)
+
+Modern <- ifelse(def$type=="Modern", 1, 0)
+Modern <- sum(Modern)
+
+Styles <- c("Futuristic", "Classic", "Sport style", "Modern")
+percentagens1 <- c(Futuristic/length(def$Style), Classic/length(def$Style), Sport_style/length(def$Style), Modern/length(def$type))
+
+Primeiro <- data.frame(Styles, percentagens1)
+Primeiro
+```
+
+
+```{r}
+Classic1 <- ifelse(def$glasses_type=="Classic", 1, 0)
+Classic1 <- sum(Classic1)
+
+Modern1 <- ifelse(def$glasses_type=="Modern", 1, 0)
+Modern1 <- sum(Modern1)
+
+Other <- ifelse(def$glasses_type=="Other", 1, 0)
+Other <- sum(Other)
+
+NewStyles <- c("Classic", "Modern", "Other")
+percentagens2 <- c(Classic/length(def$glasses_type), Modern/length(def$glasses_type), Other/length(def$glasses_type))
+
+Segundo <- data.frame(NewStyles, percentagens2)
+Segundo
+```
+
+
+### 3.3.
+
+Teste se existe relacionamento entre ter ou não óculos da marca RB (are_RB) e o tipo de óculos (o recodificado – glasses_type – se tiver feito a alínea anterior, ou o original – type – caso contrário). 
+
+
+```{r }
+# Resolução de 3.3
+
+chisq.test(def$are_RB, def$glasses_type)
+
+```
+
+> p-value < 0.05, logo, não se rejeita a hipótese nula 
+
+
