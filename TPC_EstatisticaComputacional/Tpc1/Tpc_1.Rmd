@@ -1,0 +1,83 @@
+---
+title: "TPC_1"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-09-13"
+output: html_document
+---
+
+```{r, echo=FALSE, results='hide'}
+
+# install.packages("dplyr")
+library(dplyr)
+```
+
+## Exercicio 1
+```{r, echo=TRUE}
+
+# Cubo de 6 lados
+dado_6_faces <- 1:6
+
+# Cubo de 8 lados
+dado_8_faces <- 1:8
+
+# Criar colunas com todas as combinações possiveis
+# Coluna 1 é o cubo de 6 faces, coluna 2 é o cubo de 8 faces
+dados_combi <- expand.grid(dado_6_faces, dado_8_faces)
+dados_combi
+
+# Adicionar uma 3ª coluna com as respetivas probabilidades de cada combinação
+probs_dados <- rep(1/nrow(dados_combi), times=nrow(dados_combi))
+dados_combi_prob <- data.frame(dados_combi, probs_dados)
+dados_combi_prob
+```
+
+## Exercicio 2
+```{r, echo=TRUE}
+
+# Criar a condição em que a soma das faces dos dois cubos seja superior a 8
+quais_maior_8 <- which(dados_combi_prob$Var1 + dados_combi_prob$Var2 > 8)
+# Ver quais combinaçõe respeitam a condição anterior e as suas probabilidades
+soma_maior_8 <- dados_combi_prob[quais_maior_8,]
+soma_maior_8
+
+# Fazer soma de todas as probabilidades
+p_de_soma_mai_8 <- sum(soma_maior_8$probs_dados)
+p_de_soma_mai_8
+```
+
+## Exercicio 3
+```{r, echo=TRUE}
+
+# Criar a condição em que a face do cubo 1 é igual á face do cubo 2
+quais_iguais <- which(dados_combi_prob$Var1 == dados_combi_prob$Var2)
+# Ver quais combinaçõe respeitam a condição anterior e as suas probabilidades
+face_igual <- dados_combi_prob[quais_iguais,]
+face_igual
+
+# Fazer soma de todas as probabilidades
+p_de_face_igual <- sum(face_igual$probs_dados)
+p_de_face_igual
+```
+
+## Exercicio 4
+```{r, echo=TRUE}
+
+# Fazer a interseção das 2 condições anteriores
+quais_maior_8_igual <- intersect(soma_maior_8, face_igual)
+quais_maior_8_igual
+
+# Fazer soma de todas as probabilidades
+p_quais_maior_8_igual <- sum(quais_maior_8_igual$probs_dados)
+p_quais_maior_8_igual
+```
+
+## Exercicio 5
+```{r, echo=TRUE}
+
+# Fazer a interseção das 2 condições anteriores
+quais_maior_8_ou_igual <- union(soma_maior_8, face_igual)
+quais_maior_8_ou_igual
+
+# Fazer soma de todas as probabilidades
+p_quais_maior_8_ou_igual <- sum(quais_maior_8_ou_igual$probs_dados)
+p_quais_maior_8_ou_igual

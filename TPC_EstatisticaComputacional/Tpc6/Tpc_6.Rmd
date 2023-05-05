@@ -1,0 +1,93 @@
+---
+title: "Tpc_6"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-10-04"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+## Enunciado
+### 1.
+> 1. Suponha a experiência aleatória que consiste em selecionar aleatoriamente uma foto de um banco de fotos genéricas e verificar se inclui (x=1) ou não (x=0) gatinhos. Ou seja, considere a seguinte variável aleatória:
+X –> foto escolhida ao acaso tem gatinhos (1: sim, 0: não), assumida como tendo distribuição de Bernoulli de parâmetro p.
+Pretende considerar amostras de dimensão 10 dessa população, $(X_1,X_2,⋯,X_{10})$. 
+
+##### a) Construa a função de probabilidade conjunta de $(X_1,X_2,⋯,X_{10})$.
+
+No enunciado é referido que a experiencia aleatória, possui uma distribuição de Bernoulli;
+Podemos assim então, começar por construir uma função de probabilidadeque de Bernoulli.
+
+$$f(x; p,k) = \left \{ \begin{matrix} P, & \mbox{se }x\mbox{ = 1} \\ 1-P, & \mbox{se }x\mbox{ = 0} \end{matrix} \right.$$
+Sabendo que $(X_1,X_2,⋯,X_n)$ são variáveis i.i.d (independentes e identicamente distribuids) num processo de Bernoulli, entendemos que:
+
+$(X_1,X_2,⋯,X_{10}) a.a \rightarrow X_i independente; x_i \sim bern(p)$
+
+Logo a função de probabilidade conjunta de $(X_1,X_2,⋯,X_{10})$ será dada por:
+
+ $f \{x_1,x_2,...,x_n |P\} = \Pi^{10}_{i=1} f(x_i|P)$
+
+> Relembrar que: \par
+1. Sendo P a probabilidade de sucesso, ou seja, a probabilidade de uma foto ter gatinhos;
+2. $x_1, x_2, ..., x_n \in \{0,1\}$;
+3. $f(x_1, x_2, ..., x_{10}|P) = \Pi^{10}_{i=1}f(x_i|P) = \Pi^{10}_{i=1}P^{x_i}(1-P)^{1-x_i}$
+
+Logo, se n = 10, a função de probabilidade conjunta é dada por:
+
+$$
+P^{\sum_{i=1}^{10}}(1-P)^{10 -\sum_{i=1}^{10}}
+$$
+
+##### b) Se p=0.1, qual a probabilidade de observar a amostra (1,0,1,0,0,0,0,0,0,0)? E se p=0.2?
+
+A possibilidade de observar a amostra (1,0,1,0,0,0,0,0,0,0), se p=0.1, é dada por:
+
+$g(1,0,1,0,0,0,0,0,0,0; p = 0.1) = 0.1^{\sum_{i=1}^{10}}(1-0.1)^{10 -\sum_{i=1}^{10}}$
+
+```{r}
+fx <- function(k, p) {
+  final <- p^sum(k)*(1-p)^(length(k)-sum(k))
+  return(final)
+}
+
+b1 <- c(1,0,1,0,0,0,0,0,0,0)
+
+fx(b1,0.1)
+```
+
+```{r, echo=FALSE}
+cat("O número de fotos de gatinhos em 10 fotos visionadas é de:",fx(b1,0.1))
+```
+
+A possibilidade de observar a amostra (1,0,1,0,0,0,0,0,0,0), se p=0.2, é dada por:
+
+$g(1,0,1,0,0,0,0,0,0,0; p = 0.2) = 0.2^{\sum_{i=1}^{10}}(1-0.2)^{10 -\sum_{i=1}^{10}}$
+
+```{r}
+fx(b1,0.2)
+```
+
+```{r, echo=FALSE}
+cat("O número de fotos de gatinhos em 10 fotos visionadas é de:",fx(b1,0.2))
+```
+
+##### c) Como pode interpretar (no contexto apresentado) a estatística $T_1 = \sum_{i=1}^{10}Xi$ Qual o seu valor esperado?
+
+$T_1 = \sum_{i=1}^{10}Xi$, representa o número de gatinhos numa amostra de 10 fotos $X_1, ..., X_{10}$, sendo que $X_1 \sim N(1,p)$. Logo $T_1$ é uma variável aleatórioa com uma distribuição binomial, com $n = 10$ e parâmetro de probabilidade de sucesso *p*
+
+O valor esperado em uma tentativa de Bernoulli é dado por:
+
+$E[X]=P$
+
+Sendo *p* a probabilidade de sucesso. Logo, o valor esperado de $T_1$ é dado por:
+
+$E[T_1] = E[\sum_{i=1}^{10}X_i]=10p$
+
+##### Como pode interpretar (no contexto apresentado) a seguinte estatística ? $$T_2 = \frac{\sum_{i=1}^{10}Xi}{10}$$ Qual o seu valor esperado?
+
+$$T_2 = \frac{\sum_{i=1}^{10}Xi}{10}$$Esta expressão representa o número de gatinhos numa amostra de 10 fotos $X_1, ..., X_{10}$, sendo que $X_1 \sim N(1,p)$. Logo $T_2$ indica a probabilidade da foto possuir um gatinho.
+
+O valor esperado de $T_2$ é dado por:
+
+$$E[T_2] = E[\frac {\sum_{i=1}^{10}X_i}{10}]=\frac {10p}{10} = p$$

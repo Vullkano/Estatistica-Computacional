@@ -1,0 +1,145 @@
+---
+title: "Tpc_4"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-09-24"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+
+# Exercicio 1.
+
+Considere que a procura diária, num certo supermercado, do novo artigo de limpeza, X, lançado no mês passado pela empresa TudoBrilha, pode ser modelizada através de uma variável aleatória com distribuição de Poisson de média 3,1.
+
+### 1. a)
+
+1 - Iremos designar a variável aleatória de interesse como sendo $X_a$ -> (a procura diária do novo artigo de limpeza X, com distribuição de Poisson de média 3,1).
+
+2 - Como é pretendido descobrir a probabilidade de, num dia, a procura de X ser no máximo 3, será necessário recorrer a uma função distruibuição cumulativa, nomeadamente, $P[X_a \le 3]$
+
+3 - Pela fórmula de Poisson, iremos obter:
+$$
+\frac{e^{-\lambda} \lambda^x}{x!}, \lambda = 3.1 , x \in [0,3]
+$$
+Ou seja, podemos assim verificar que a fórmula será:
+$$
+f(x) = \frac{e^{-3.1} * 3.1^x}{x!},x \in [0,3] \iff \sum_{i=0}^{3}{f(x_i)}
+$$
+Teoricamente, será a soma de todas as probabildades, desde 1 a 3.
+
+4 - Para calcucar a probabildiade pedida, iremos recorrer á função *ppois()*
+```{r}
+ppois(3, 3.1)
+```
+
+### 1. b)
+
+1 - Iremos designar a variável aleatória de interesse como sendo $X_b$ -> (a procura diária do novo artigo de limpeza X, com distribuição de Poisson de média 3,1 * 7 = 21.7, numa semana).
+
+2 - Como é pretendido descobrir a probabilidade de, numa semana, a procura de X ser no minimo 22, será necessário recorrer a uma função distruibuição cumulativa, nomeadamente, $P[X_b > 21]$
+
+3 - Iremos somar todas as probabilidades, desde 1 até 22, excluido, e iremos subtrair 1 (valor certo na probabilidade) por esse mesmo valor
+$P(B) = P(X \ge 22) = 1 - P(X < 22) = 1- \sum_{i=0}^{21}{P[X = i]}$
+
+4 - Para calcucar a probabildiade pedida, iremos recorrer á função *ppois()* com o *lower.tail = FALSE* (ou fazer 1 - *ppois*)
+```{r}
+ppois(21, 7*3.1, lower.tail = FALSE)
+```
+
+### 1. c)
+
+1 - Iremos designar a variável aleatória de interesse como sendo $X_c$ -> (a procura diária do novo artigo de limpeza X, com distribuição de Poisson de média 3,1).
+
+2 - Como é pretendido descobrir a probabilidade de, numa semana, a procura de X ser no minimo 22, será necessário recorrer a uma função distruibuição cumulativa da distribuição binomial, nomeadamente, $F(x) = P[X_c \le x]$; neste caso iremos obter:
+
+3 - Será a área da esquerda da distruibuição binomial
+$f(x) = C_x^7 *0.6248^x*(1-0.6248)^{7-x} \iff \sum_{i=x}^{4}{f(x_i)}$
+
+4 - Para calcucar a probabildiade pedida, iremos recorrer á função *pbinom()*
+```{r}
+pbinom(4,7,prob= ppois(3,3.1))
+```
+
+# Exercicio 2.
+
+### 2. a)
+
+```{r, echo=FALSE}
+#Em primeiro lugar definir a função
+fx <- function(x){
+  ifelse((0 < x & x < 1), 3*(1-x)**2, 0)}
+
+#Criar o gráfico em causa
+plot(fx, 0, 1,xlim=c(0,1),n=10000, 
+     main = "Função densidade do volume de combustível (em milhões de litros)",
+     xlab = "X",
+     ylab = "F(x)")
+points(x = c(0,0,1),
+       y = c(0,3,0),
+       pch = 1,
+       col = "black")
+```
+
+### 2. b)
+
+Para obtermos a probabilidade de, em certo mês, o consumo se situar entre 0,2 e 0,8 milhões de 
+litros; basta calcular a área dessa mesma área no gráfico da função densidade (função apresentada anteriormente).
+
+```{r, echo=FALSE}
+#Em primeiro lugar definir a função
+fx <- function(x){
+  ifelse((0 < x & x < 1), 3*(1-x)**2, 0)}
+
+#Criar o gráfico em causa
+plot(fx, 0, 1,xlim=c(0,1),n=10000, 
+     main = "Função densidade do volume de combustível (em milhões de litros)",
+     xlab = "X",
+     ylab = "F(x)")
+points(x = c(0,0,1),
+       y = c(0,3,0),
+       pch = 1,
+       col = "black")
+yh <- ((200:800)/1000)
+
+#Para vermos graficamente a área em causa
+points(x = c(0.2,0.8,0.8,0.2),
+       y = c(0,0,fx(0.8),fx(0.2)),
+       pch = 1,
+       col = "blue")
+polygon(c(0.8, 0.8, 0.2, 0.2, yh),c(fx(0.8), 0, 0, fx(0.2), fx(yh)),col="grey90", border = "black", lwd = 2)
+
+#A probabilidade pedida pode ser obtida usando a função integrate:
+Prob <- integrate(fx, 0.2, 0.8, abs.tol = TRUE)
+Prob$value
+
+```
+
+Para obtermos a área dessa região, basta usar as integrais para o cálculo das mesmas e, usando a função *integrate* iremos obter aquilo que queremos.
+
+```{r}
+#A probabilidade pedida pode ser obtida usando a função integrate:
+Prob <- integrate(fx, 0.2, 0.8, abs.tol = TRUE)
+Prob$value
+```
+
+### 2. c)
+
+Para sabermos o consumo médio mensal, primeiro precisamos de saber o consumo diária, que é dada por *E(X)* temos que criar uma nova função dado que, para calcular o valores esperado, precisamos de ter o x a multiplicar pela função.
+
+```{r}
+xfx <- function(x){
+  ifelse((0 < x & x < 1), x*(3*(1-x)**2), 0)}
+```
+
+Depois disto podemos calcular o integral da nova função para ter o valor esperado.
+
+```{r}
+E_X=integrate(xfx, 0, 1)
+E_X
+```
+
+```{r, echo=FALSE}
+cat("O consumo médio mensal é de:",round(1000000*E_X$value),"Litros")
+```

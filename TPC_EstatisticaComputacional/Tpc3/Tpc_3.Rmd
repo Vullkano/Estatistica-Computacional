@@ -1,0 +1,216 @@
+---
+title: "Estatistica Computacional -> TPC 3"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-09-20"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+
+### Experiência: Lançamento de um dado de 6 faces e equilibrado, duas vezes
+
+#### Definição da variável aleatória:
+#####   X -> Soma do número de faces, voltados para cima, em dois lançamentos de um cubo (numerado de 1 a 6) equilibrada
+
+```{r, echo=FALSE}
+# install.packages("tibble")
+# library(tibble)
+```
+
+## Exercicio 1.
+
+Tabela com as respetivas combinações e as respetivas probabilidades de ocorrerem (Dado equilibrado)
+
+```{r}
+dado <- 1:6
+lancamento_dados <- expand.grid("lancamento 1" = dado, "lancamento 2" = dado)
+lancamento_dados$Prob <- rep(1/nrow(lancamento_dados), times = nrow(lancamento_dados))
+lancamento_dados
+```
+
+É a mesma tabela que a anterior, mas possui uma coluna a mais; tendo esta a soma das 2 faces que sairam (Para assim desta forma conseguir criar a função de probabilidade)
+
+```{r}
+lancamento_dados$Soma_Faces <- rowSums(lancamento_dados[,1:2])
+lancamento_dados
+```
+
+Na tabela abaixo, é possivel verificar que $X$ contém os valores da variável, nomeadamente, o *Soma_Faces*;
+
+*Prob* contém a respetiva função de probabilidade.
+
+```{r}
+X <- aggregate(Prob~Soma_Faces, lancamento_dados, sum)
+X
+```
+
+## Exercicio 2.
+
+```{r, echo=FALSE}
+plot (x=X$Soma_Faces,
+      y=X$Prob , 
+      type="h",
+      main=substitute(paste(bold("Função de probabilidade de X"))),
+      xlab=substitute(paste(italic("x"))),              
+      ylab=substitute(paste(italic("f(x)"))),
+      col="light grey"              
+)
+
+# Adicionar pontos ao gráfico
+
+points(x=X$Soma_Faces,                     
+       y=X$Prob,
+       pch=16,
+       col="blue"
+)
+```
+
+## Exercicio 3.
+
+##### Definição da função de distribuição
+
+A função de distribuição $F(x)$ (notem a utilização de Maiúscula) para uma variável aleatória discreta é uma função definida em **patamares** (ou função em escada). 
+
+Podemos começar por definir os valores dos diferentes patamares, que correspondem às probabilidades acumuladas em cada um dos pontos do suporte de X.
+
+Para isso podemos usar a função genérica **cumsum()**
+
+```{r}
+FX_pontos <- cumsum(X$Prob)
+FX_pontos
+```
+
+## Exercicio 4 
+
+##### Função de distribuição
+
+ $$ F(x)=   \left \{
+            \begin{array}{ll}
+                  0  & x < 2 \\
+                  0.02777778  & 2 \le x < 3 \\
+                  0.08333333 & 3 \le x < 4 \\
+                  0.16666667 & 4 \le x < 5 \\
+                  0.27777778  & 5 \le x < 6 \\
+                  0.41666667 & 6 \le x < 7 \\
+                  0.58333333 & 7 \le x < 8 \\
+                  0.72222222  & 8 \le x < 9 \\
+                  0.83333333 & 9 \le x < 10 \\
+                  0.91666667 & 10 \le x < 11 \\
+                  0.97222222 & 11 \le x < 12 \\
+                  1 & x \le 12 \\
+\end{array} 
+\right.  $$
+
+## Exercicio 5.
+
+##### Representação gráfica da função de distribuição
+
+Para representar graficamente a função em todo o seu domínio vamos recorrer a **stepfun**
+
+```{r, echo=FALSE}
+plot.stepfun(
+  stepfun(
+    X$Soma_Faces,
+    c(0,FX_pontos),
+    right=FALSE
+  ),
+  verticals=FALSE,
+  pch = 16,
+  main=substitute(paste(bold("Função de Distribuição de X"))),
+  xlab=substitute(paste(italic("x"))),              
+  ylab=substitute(paste(italic("f(x)")))
+  )
+```
+
+## Exercicio 6.
+
+#### 1 - Recurso à Função de probabilidade
+
+Para obter a probabilidade de obter mais de 2 pontos no lançamento de um dado, $P[7 <= X <= 10]$, basta somar a função de probabilidade para os valores da variável que respeitam a condição.
+
+```{r}
+sum(X[X$Soma_Faces <= 10 & X$Soma_Faces >= 7, ]$Prob )
+```
+
+#### 2 - Recurso à função de distribuição
+
+Recordar que $$P[x_k<X \le x_t ]=\sum_{k+1}^t f(x_i)=F(x_t)-F(x_k)$$
+
+Se pretendermos $P[7\le X \le 10]$ basta calcular $P[X \le 9]-P[X < 5]=F(9)-F(5)=$
+
+```{r, echo=FALSE}
+FX_pontos[9] - FX_pontos[5]
+```
+## Exercicio 7.
+
+#### 1 - Recurso à função de probabilidade
+
+Para obter a probabilidade de obter mais de 2 pontos no lançamento de um dado, $P[7 < X <= 10]$, basta somar a função de probabilidade para os valores da variável que respeitam a condição.
+
+```{r}
+sum(X[X$Soma_Faces <= 10 & X$Soma_Faces > 7, ]$Prob )
+```
+
+#### 2 - Recurso à função de distribuição
+
+Se pretendermos $P[7< X \le 10]$ basta calcular $P[X \le 9]-P[X < 6]=F(9)-F(6)=$
+
+```{r, echo=FALSE}
+FX_pontos[9] - FX_pontos[6]
+```
+## Exercicio 8.
+
+#### 1 - Recurso à função de probabilidade
+
+Para obter a probabilidade de obter mais de 2 pontos no lançamento de um dado, $P[7 < X < 10]$, basta somar a função de probabilidade para os valores da variável que respeitam a condição.
+
+```{r}
+sum(X[X$Soma_Faces < 10 & X$Soma_Faces > 7, ]$Prob )
+```
+
+#### 2 - Recurso à função de distribuição
+
+Se pretendermos $P[7 < X < 10]$ basta calcular $P[X < 10]-P[X < 7]=F(10)-F(7)=$
+
+```{r, echo=FALSE}
+FX_pontos[10] - FX_pontos[7]
+```
+
+## Exercicio 9. (Valor esperado e variância numa v.a. discreta)
+
+#### 1. Média
+
+Visionando a fórmula $$E[X]=\sum_{1}^{n} x_i f(x_i)$$
+
+Basta calcular a soma dos produtos da primeira com a segunda colunas definidas:
+
+```{r}
+miu_X <- sum(X$Soma_Faces*X$Prob)
+miu_X
+```
+
+#### 2. Variância
+
+Para a variância, podemos aplicar a fórmula simplificada (média dos quadrados menos o quadrado da média) ou a definição formal (média dos quadrados dos desvios face à média).
+
+###### a) média dos quadrados menos o quadrado da média
+
+```{r}
+var_X<- sum((X$Soma_Faces^2)*X$Prob)-miu_X^2
+round(var_X,4)
+```
+
+###### b) média dos quadrados dos desvios face à média
+
+```{r}
+round(sum((X$Soma_Faces-miu_X)^2*X$Prob),4)
+```
+#### 3. Desvio-Padrão
+
+```{r}
+round(sqrt(var_X),2)
+```
+
+E assim o desvio-padrão será ${\sigma}_{X}=$ `r round(sqrt(var_X),2)`

@@ -1,0 +1,103 @@
+---
+title: "Tpc_5"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-10-01"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+## Enunciado
+### 1.
+> Sabe-se que nos municípios de uma certa região turística, 40% mais que duplicam a sua população nos meses de verão. Suponha que o acréscimo no consumo de água por cada turista alojado, por dia, pode ser descrito através de uma variável aleatória com distribuição Normal, de média 0,50 m3 e desvio-padrão 0,05 m3.
+
+#### a) Qual a probabilidade do acréscimo no consumo, por turista e por dia, ser inferior a 0,437 m3
+
+$X$ -> acréscimo no consumo de água por cada turista alojado, por dia
+$X \sim N(0.5, 0.05)$
+
+Para conseguirmo responder a esta pergunta, iremos usar a função *pnorm()*, que irá retornar o valor da função da densidade cumulativa da distribuição normal, dando a média e o desvio padrão da população em causa.
+
+Portanto, podemos dizer que $P(X < 0.437) = pnorm(0.437,0.5,0.05)$
+
+```{r}
+pnorm(0.437,0.5,0.05)
+```
+
+#### b) Calcule o maior acréscimo de consumo dos 25% menores acréscimos.
+
+Analisando a pergunta, é notório que, neste caso, iremos precisar de envolver quartis para obter-mos uma respota.
+Para isso, iremos usar a função *qnorm()* (Esta função lida, por padrão, com áreas abaixo do valor limite fornecido).
+A função qnorm dá o valor da função de densidade cumulativa inversa da distribuição normal dada uma certa variável aleatória p, uma média populacional μ e um desvio padrão populacional σ.
+Como na pergunta nos é pedido 25% menores, iremos pedir o quatil 25, obtendo o seguinte: *qnorm(0.25, 0.5, 0.05)*
+
+```{r}
+qnorm(0.25, 0.5, 0.05)
+```
+
+#### c) Numa certa unidade de turismo rural casa, a capacidade é de 20 hóspedes. Considerando um momento em que a unidade está totalmente cheia, qual a probabilidade do consumo de água diário aumentar em pelo menos 10,75 m3?
+
+A resolução deste exercicio será muito parecido com a resolução do exercicio *a)*, mas com breves diferenças.
+$X_c$ -> acréscimo no consumo de água por cada 20 turistas alojado, por dia
+$X_c \sim N(0.5 * 20 = 10, 0.05 * 20 = 1)$
+Nesta questão também será usado a função *pnorm*
+Então teremos de calculcar o seguinte: $P(X_c \ge 10.75) = 1- P(X_c < 10.75) = pnorm(10.75,10,0.05 * \sqrt20, lower.tail = FALSE)$
+
+> ###### Nota: Relembrar o Corolário - - - 
+> $T = \sum_{i=1}^n X_i \sim N(\mu_T = n\mu, \sigma_T = \sigma \sqrt n)$
+
+```{r}
+pnorm(10.75,0.5*20, 0.05* sqrt(20), lower.tail = FALSE)
+```
+
+#### d) Em relação à casa de turismo rural da alínea anterior: 
+
+> ###### Nota: A função *rnorm* vair criar um vetor de números aleatórios normalmente distribuidos
+
+> i) Simule uma observação do acréscimo de consumo de água de 20 hóspedes dessa 
+casa de turismo rural. Pretende-se que simule o acréscimo de consumo gerado 
+por cada um desses 20 hóspedes, e que reporte os acréscimos individuais e o 
+acréscimo total (soma dos acréscimos) para esta simulação.
+
+Podemos verificar 20 simulações listadas abaixo
+```{r}
+teste_individual <- rnorm(20, 0.5*20, 0.05*sqrt(20))
+teste_individual
+```
+
+Para uma melhor análise, podemos utilizar um histograma para ver a distribuição
+```{r, echo=FALSE}
+h <- hist(teste_individual, plot=F, breaks = 20)
+cols <- c("#8DD3C7", "#FFFFB3", "#BEBADA", "#FB8072")  
+k <- cols[findInterval(h$mids, quantile(teste_individual), rightmost.closed=T, all.inside=F)]
+plot(h, col=k)
+```
+
+Fazendo a soma dos valores, obtemos o seguinte valor
+```{r}
+soma_teste_individual <- sum(teste_individual)
+soma_teste_individual
+```
+
+> ii) Simule 1000 observações nas mesmas condições, guardando apenas a soma 
+para cada uma delas, e, com base nessa simulação, estime a probabilidade que 
+calculou de forma exata em c)
+
+```{r}
+teste_mil <- replicate(1000, sum(rnorm(20, mean=0.5*20, sd=0.05*sqrt(20))))
+teste_final <- length(which(teste_mil >= 10.75 * 20)) / length(teste_mil)
+teste_final
+```
+
+```{r, echo=FALSE}
+cat("A probabilidade é de:",teste_final,"%")
+```
+
+```{r, echo=FALSE, fig.align='left'}
+h <- hist(teste_mil, breaks = 20, freq = FALSE, xlab = "Consumo de água", col = cols)
+curve(dnorm(x, mean = mean(teste_mil), sd = sd(teste_mil)), add = TRUE)
+cols <- c("#8DD3C7", "#FFFFB3", "#BEBADA", "#FB8072")  
+k <- cols[findInterval(h$mids, quantile(teste_mil), rightmost.closed=T, all.inside=F)]
+plot(h, col=k)
+```

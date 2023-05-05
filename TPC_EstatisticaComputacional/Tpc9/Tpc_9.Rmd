@@ -1,0 +1,142 @@
+---
+title: "Tpc_9"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-10-29"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+##### Enunciado
+
+> Num inquérito sobre óculos de sol foram colocadas várias questões aos inquiridos. Para além 
+de características sociodemográficas (sexo, idade e nível de educação), perguntou-se o tipo 
+de óculos de sol que possuíam, quando tinham sido adquiridos, onde tinham sido adquiridos, 
+quanto tinham custado e se eram da marca SoleMio(SM/RB). 
+Para este TPC, irão apenas analisar duas questões: 1. O “estilo dos óculos de sol” – variável 
+type; e, 2. a questão “are_RB”, que indica se os óculos são ou não da marca SoleMio
+Pretende-se saber se existe associação entre o estilo dos óculos de sol e o facto de serem 
+da marca RB.
+
+```{r}
+def <- readRDS("Estudo_Oculos_Sol.rds")
+def
+```
+
+#### 1º Passo - Construir a tabela de contingência com as frequências absolutas, com o estilo em linha e a marca em coluna; adicionar as margens à tabela
+
+```{r}
+tab1 <- table(def$type, def$are_RB)
+tab1_sum <- addmargins(tab1, FUN = sum)
+knitr::kable(tab1_sum,format="markdown",digits=3)
+```
+
+#### 2º Passo - Obter a tabela de contingência com as frequências relativas por coluna (distribuição  das respostas para o estilo, no grupo dos óculos RB e no grupo dos óculos Não RB)
+
+```{r}
+tab1_prop <- prop.table(tab1) # freq relativas
+tab1_propsum <- addmargins(tab1_prop, FUN = sum)
+knitr::kable(tab1_propsum,format="markdown",digits=3)
+```
+
+#### 3º Passo - Representar graficamente a informação
+
+```{r, echo=FALSE}
+# install.packages("viridis")
+library("viridis")
+
+tab1_prop <- prop.table(tab1,margin = 2)
+cores<-viridis(4)
+plot(1,
+xlim = c(0,3.5), ylim = c(0,1),
+type = "n", # vazio
+main = "São da marca SoleMio? : repartição por Estilos", # título
+ylab = "", xlab = "", # sem nomes
+xaxt = "n") # sem marcas eixo x
+barplot(tab1_prop, # att dados org em colunas
+col = cores, # cores a usar
+width = 0.8, # largura das barras
+# para dar espaço p legenda
+add=TRUE)
+legend("topright",
+legend = rownames(tab1_prop),
+pch = 15,
+col = cores)
+
+```
+
+#### 4º Passo - Definir as hipóteses em teste e identificar a estatística de teste
+
+> * X -> O estilo dos óculos de sol (Classic, Futuristic, Modern, Sport style)
+> * Y -> São da marca SoleMio ? (Sim ou Não)
+
+<center>
+  *Hipóteses em teste*
+</center>
+
+> * H0 -> O estilo dos óculos de sol é independente da marca SoleMio
+> * H1 -> Existe relacionamento emtre o estilo de óclos e a marca SoleMio
+
+<center>
+  *Ou, Teoricamente:*
+</center>
+
+$$
+H0: \forall(i,j) \ \in \ \{1:r\} \ \times \ \{1:c\}:P_{ij} = P_{i.} \times P_{.j}
+$$
+$$
+H1: \exists(i,j) \ \in \ \{1:r\} \ \times \ \{1:c\}:P_{ij} \not = P_{i.} \times P_{.j}
+$$
+<center>
+  *Estatística de teste*
+</center>
+
+$$
+ET = \sum_{i=1}^{r} \sum_{j=1}^{c} \frac {(o_{ij} - e_{ij})^2}{e_{ij}} \sim X^2_{(r-1)(c-1)} = \sum_{i=1}^{4} \sum_{j=1}^{2} \frac {(o_{ij} - e_{ij})^2}{e_{ij}} \sim X^2_{(4-1)(2-1)}
+$$
+
+> Sendo ambas variáveis fatores, o estudo do relacionamento entre elas será feito através da análise do respetivo
+cruzamento (tabela de contingência), com a subsequente aplicação do teste Qui-quadrado de Pearson.
+
+#### 5º Passo - Obter os resultados do teste
+
+```{r}
+teste <- chisq.test(tab1)
+teste
+```
+
+> Do teste é possível concluir que existe relacionamento entre as variáveis (porque o p-value apresentado é
+inferior ao nível de significância de referência $\alpha$), sendo necessário estudar o padrão de relacionamento.
+Isto significa que existem divergências significativas entre as frequências observadas e as frequências esperadas
+(ou seja, o que esperaríamos observar numa situação de independência). Para ter uma ideia inicial destas
+divergências podemos observar a tabela das frequências esperadas.
+
+<center>
+  *Tabela com Frequências esperadas*
+</center>
+
+```{r}
+tab1_esperadas<-teste$expected
+knitr::kable(addmargins(tab1_esperadas, FUN = sum),format="markdown",digits=3)
+```
+##### A tabela acima permite ainda verficar potenciais problemas na leitura do p-value: para que os resultados do teste sejam fiáveis (no fundo, para que a ET possa ser considerada como aproximadamente uma Qui-quadrado com os parâmetros especificados) é necessário que:
+
+> * Não mais de 20% das células apresentem valor esperado inferior a 5
+  * Todas as células apresentem valor esperado superior a 1.
+  
+##### Caso isso não aconteça, o teste é realizado de qualquer das formas, mas é incluído um warning, e convém analisarmos a tabela acima.
+
+
+#### 6º Passo - Mostrar a tabela dos resíduos estandardizados e identificar as associações relevantes.
+
+```{r}
+knitr::kable(teste$stdres,format="markdown",digits=3)
+```
+
+> Visionando a tabela anterior, é possivel verificar que as associações mais relevantes são a da linha do "Classic" e do "Modern".
+
+#### 7º Passo - Escrever parágrafo final que resuma os resultados encontrados em 1-6 e responda à questão colocada: saber se existe associação entre o estilo dos óculos de sol e o facto de serem da marca RB (e de que forma)
+
+> Podemos assim concluir que, pelo estudo realizado nas alineas anteriores, rejeitamos H0, pois, o p-value apresentado é
+inferior ao nível de significância de referência \alpha (visionar). Analisando o gráfico do 3º passo, com a tabla de frequência esperadas, é notório que existe uma preferência pelos óculos do tipo classico da marca SoleMio e existe um maior desgosto pelo tipo moderno da marca SoleMio

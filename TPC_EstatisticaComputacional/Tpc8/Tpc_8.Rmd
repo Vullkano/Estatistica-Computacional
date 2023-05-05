@@ -1,0 +1,381 @@
+---
+title: "Tpc_8"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-10-15"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+##### Enunciado
+
+> Num inquérito sobre óculos de sol foram colocadas várias questões aos inquiridos. Para além 
+de características sociodemográficas (sexo, idade e nível de educação), perguntou-se o tipo 
+de óculos de sol que possuíam, quando tinham sido adquiridos, onde tinham sido adquiridos, 
+quanto tinham custado e se eram da marca SoleMio(SM/RB). 
+Para além destas questões, ainda foram colocadas outras que originaram a construção de 
+um conjunto de indicadores, cada um numa escala contínua de 0 a 10 – fatores que 
+influenciam a compra de óculos de sol.
+Para este TPC, irão apenas analisar duas questões: 1. O indicador “Importância do Preço na 
+compra de óculos de sol” – variável Price; e, 2. a questão “are_RB”, que indica se os óculos 
+são ou não da marca SoleMio
+Os “Fatores que influenciam a compra de óculos de sol” são variáveis que assumem valores 
+reais no intervalo 0-10, onde 0 corresponde a “nada importante” e 10 corresponde a 
+“extremamente importante”.
+
+
+```{r}
+def <- readRDS("Estudo_Oculos_Sol.rds")
+def
+```
+
+#### Exercicio 1
+
+```{r, echo=FALSE}
+import_maior_media <- mean(def$Price <= mean(def$Price))
+amostra_media_preco <- round(import_maior_media,4)
+```
+
+Para termos uma melhor análise da amostra, vamos começar por verificar quantas pessoas da amostra deram uma avaliação superior, e inferior, á média da amostra, que é, nomeadamente, `r amostra_media_preco` 
+
+
+```{r,include=FALSE}
+Price_hist <- hist(def$Price, breaks = 100)$breaks
+```
+
+```{r, echo=FALSE}
+color_list <- rep('blue', length(Price_hist))
+color_list[Price_hist < mean(def$Price)] <- 'red'
+
+x <- hist(def$Price, 
+     xlab='Avaliação da Importância do preço', 
+     main="A Importância do Preço na compra de óculos de sol”",
+     breaks=100,
+     freq = FALSE,
+     col=color_list)                           # Symbol types
+
+abline(v=mean(def$Price),col="black",lwd=3, lty=2)
+legend("topright",                          # Put legend in top right of graph
+       legend = c("> média def$Price",
+                  "<= média def$Price"),         # Names of groups
+       col = c("blue", "red"),               # Colors of symbols
+       bty = "n",
+       lwd = 2) 
+```
+
+Avaliando o gráfico acima, é possivel verificar que, aproximadamente, 65% das pessoas deram uma avaliação do preço inferior ao da amostra.
+
+Daqui para a frente, começamos a aplicar as etapas do teste de hipóteses
+
+##### 1.1 - Formulação das hipóteses
+
+> Será que a importância concedida ao preço está, em termos médios, acima do ponto 
+intermédio da escala (i.e. 5) ?
+
+ou seja:
+
+> H0: media <= 5 (hipótese nula) \
+H1: media > 5 (hipótese alternativa)
+
+```{r}
+H0_oculos <- 5
+```
+
+> Nota: Temos um teste unilateral à direita
+
+##### 1.2 - Escolher o teste adequado
+
+$$\frac {\overline X - \mu_0}{S'/ \sqrt n} \sim N(0,1)$$
+
+> É um tipo de população normal e não se conhece o respetivo desvio padrão.
+
+##### 1.3 - Estipular o erro máximo que nos permitimos correr ou por outras palavras, através do nível designificância definir a região crítica e não crítica;
+
+
+```{r}
+significancia <- 0.05
+RC_1 <- qnorm(significancia, lower.tail = FALSE)
+# Ou então poderiamos usar qt(significancia, length(def$Price)-1) caso a amostra fosse pequena
+```
+
+Podemos assim visionar que a região critica situa-se entre:
+
+$$
+RC= \ [`r RC_1`, + \infty[
+$$
+Consequentemente, a região não crítica situa-se entre:
+
+$$
+RNC = \ ]- \infty, `r RC_1`[
+$$
+
+```{r, echo=FALSE}
+eixo_x<-c(-2,4)
+eixo_y<-c(0,dnorm(0))
+
+plot(1, 
+     xlim = eixo_x, ylim = eixo_y,
+     type = "n", 
+     main = "N(0,1)",
+     ylab = "f.d.p", xlab = "")
+
+# Add x and y-axis lines
+abline(h = 0, col="grey")
+abline(v = 0, col = "black", lty=2, lwd=2)
+abline(v = qnorm(0.05, lower.tail = FALSE), col = "red", lty=2, lwd=2)
+
+# desenhar a função
+# A função a incluir será a densidade de probabilidade
+
+curve(dnorm(x),
+      from = eixo_x[1], to = eixo_x[2],
+      n = 1000,
+      col = "darkblue",
+      lwd = 2,
+      add=TRUE)
+
+#marcar a área
+
+x1 <- seq(qnorm(0.05, lower.tail = FALSE),4,0.01)      # sequência de pontos, separados por 0.01
+y1 <- dnorm(x1)       # imagem desses x
+
+coord_x <- c(x1,4,qnorm(0.05, lower.tail = FALSE)) 
+coord_y <- c(0,y1,0)
+polygon(coord_x,coord_y,col='blue4')
+
+text(x=3,
+     y=.2,
+     labels=paste(round(qnorm(0.05, lower.tail = FALSE),3)),
+     pos=2,
+     col="darkred")
+
+text(x=2.39,
+     y=.2,
+     labels="X = ",
+     pos=2,
+     col="darkred")
+
+text(x=2,
+     y=.05,
+     labels="RC",
+     pos=1,
+     col="white")
+```
+
+##### 1.4 - Calcular e verificar se o valor do teste(t) está na região crítica ou não
+
+```{r}
+med_preco <- mean(def$Price)
+n1_price <- length(def$Price)
+sd1 <- sd(def$Price)
+
+t_price <- (med_preco - H0_oculos)/(sd1/sqrt(n1_price))
+t_price
+```
+
+Após calculado *t*, vamos verificar se este se encontra na região critica: 
+
+```{r}
+ocu_concl <- t_price < qnorm(significancia, lower.tail = FALSE)
+ocu_concl
+```
+> Em alternativa a tudo o que fizemos anteriormente, podemos fazer o seguinte:
+
+```{r}
+t.test(def$Price, alternative = "greater", mu = H0_oculos, var.equal = TRUE, conf.level = 1- significancia)
+```
+
+
+##### 1.5 - Tomar a decisão (sem esquecer que nunca se afirma que se aceita a H0: ou a rejeitamos, ou não a rejeitamos)
+
+> Como o valor de t não pertence à região de não rejeição, rejeitamos H0=`r H0_oculos`,com um nível de significância de `r significancia` e consequentemente há razões para crer que a importância concedida ao preço está, em termos médios, acima do ponto intermédio da escala (i.e. 5)
+
+#### Exercicio 2
+
+> Será que homens e mulheres diferem, em termos médios, na importância concedida ao 
+preço? (Suponha que as variâncias do preço nos dois grupos, embora sejam desconhecidas, 
+podem ser consideradas iguais)
+
+```{r}
+masculino_price <- def$Price[which(def$sex == 'Male')]
+feminino_price <- def$Price[which(def$sex == 'Female')]
+```
+
+##### 2.1 - Formulação das hipóteses
+
+> Será que homens e mulheres diferem, em termos médios, na importância concedida ao 
+preço?
+
+ou seja:
+
+> Ho: u1 - u2 = 0 (hipótese nula) \
+Ha: u1 - u2 $\not=$ 0 (hipótese alternativa)
+
+```{r}
+H0 <- 0
+```
+
+> Nota: Temos um Teste Bilateral
+
+##### 2.2 - Escolher o teste adequado
+
+$$
+\frac {(\overline X_1 - \overline X_2) - (\mu_1 - \mu_2)_0}{\sqrt{\frac{1}{n_1} + \frac{1}{n_2}} \sqrt{\frac{(n_1 - 1)s_1^{'2} + (n_2 - 1)s_2^{'2}}{n_1+n_2-2}}} \sim N(0,1)
+$$
+
+> População normal; não se conhece o desvio padrão de ambas as populações, mas assume-se que são o mesmo, ou seja $\sigma^2_1=\sigma^2_2$.
+
+##### 2.3 - Estipular o erro máximo que nos permitimos correr ou por outras palavras, através do nível designificância definir a região crítica e não crítica;
+
+```{r}
+significancia = 0.05/2
+
+n1 <- length(masculino_price)
+n2 <- length(feminino_price)
+
+RC <- qt(significancia,n1+n2-2) 
+# ou 
+RC <- c(-qt(1-significancia,n1+n2-2), qt(1-significancia,n1+n2-2))
+RC
+```
+
+Podemos assim visionar que a região critica situa-se entre:
+
+$$
+RC = \  [`r RC[1]`, `r RC[2]`]
+$$
+Consequentemente, a região não crítica situa-se entre:
+
+$$
+RNC = \ ]-\infty, `r RC[1]`[ \ \cup \ ]`r RC[2]`, +\infty[
+$$
+
+```{r, echo=FALSE}
+eixo_x<-c(-4,4)
+eixo_y<-c(0,dnorm(0))
+
+plot(1, 
+     xlim = eixo_x, ylim = eixo_y,
+     type = "n", 
+     main = "N(0,1)",
+     ylab = "f.d.p", xlab = "")
+
+# Add x and y-axis lines
+abline(h = 0, col="grey")
+abline(v = 0, col = "black", lty=2, lwd=2)
+abline(v = -qt(1-significancia,n1+n2-2), col = "red", lty=2, lwd=2)
+abline(v = qt(1-significancia,n1+n2-2), col = "red", lty=2, lwd=2)
+
+# desenhar a função
+# A função a incluir será a densidade de probabilidade
+
+curve(dnorm(x),
+      from = eixo_x[1], to = eixo_x[2],
+      n = 1000,
+      col = "darkblue",
+      lwd = 2,
+      add=TRUE)
+
+x1_pos <- seq(qt(1-significancia,n1+n2-2), 4,0.01)      # sequência de pontos, separados por 0.01
+y1_pos <- dnorm(x1_pos)       # imagem desses x
+
+coord_x_pos <- c(x1_pos, 4,100) 
+coord_y_pos <- c(0,y1_pos,0)
+polygon(coord_x_pos,coord_y_pos,col='blue4')
+
+
+#marcar a área
+
+x1_neg <- seq(-4, -qt(1-significancia,n1+n2-2),0.01)      # sequência de pontos, separados por 0.01
+y1_neg <- dnorm(x1_neg)       # imagem desses x
+
+coord_x_neg <- c(-4,x1_neg,-qt(1-significancia,n1+n2-2)) 
+coord_y_neg <- c(0,y1_neg,0)
+polygon(coord_x_neg,coord_y_neg,col='blue4')
+
+text(x=3.3,
+     y=.2,
+     labels=paste(round(qt(1-significancia,n1+n2-2),3)),
+     pos=2,
+     col="darkred")
+
+text(x=2.7,
+     y=.2,
+     labels="X = ",
+     pos=2,
+     col="darkred")
+
+text(x=2.25,
+     y=.038,
+     labels="RC",
+     pos=1,
+     col="white")
+
+# - - 
+
+text(x=-2.31,
+     y=.2,
+     labels=paste(round(-qt(1-significancia,n1+n2-2),3)),
+     pos=2,
+     col="darkred")
+
+text(x=-1.9,
+     y=.2,
+     labels="= X",
+     pos=2,
+     col="darkred")
+
+text(x=-2.15,
+     y=0.038,
+     labels="RC",
+     pos=1,
+     col="white")
+```
+
+##### 2.4 - Calcular e verificar se o valor do teste(t) está na região crítica ou não
+
+```{r}
+med_masculino=mean(masculino_price)
+n_masculino=length(masculino_price)
+dp_masculino=sd(masculino_price)
+
+med_feminino=mean(feminino_price)
+n_feminino=length(feminino_price)
+dp_feminino=sd(feminino_price)
+
+sdd=sqrt(n_masculino**-1+n_feminino**-1)*sqrt(((n_masculino-1)*dp_masculino**2+(n_feminino-1)*dp_feminino**2)/(n_masculino+n_feminino-2))
+
+t <- ((med_masculino-med_feminino) - H0)/sdd
+
+t
+```
+
+Após calculado *t*, vamos verificar se este se encontra na região critica: 
+
+```{r}
+t_dentro<- (t < qt(significancia,n1+n2-2) & t > -qt(significancia,n1+n2-2))
+t_dentro
+```
+
+> Em alternativa a tudo o que fizemos anteriormente, podemos fazer o seguinte:
+
+```{r}
+t.test(masculino_price,feminino_price, alternative = "two.sided", mu = H0, var.equal = TRUE, conf.level = 1- significancia)
+
+# ou t.test(dados$Price~dados$sex, alternative="two.sided", var.equal=TRUE)
+```
+
+
+##### 2.5 - Tomar a decisão (sem esquecer que nunca se afirma que se aceita a H0: ou a rejeitamos, ou não a rejeitamos)
+
+> Como o valor de t não pertence à região de não rejeição, rejeitamos H0=`r H0` com um nível de significância de `r significancia` e consequentemente há razões para crer que os homens e as mulheres diferem, em termos médios, na importância concedida ao preço.
+
+
+##### EXTRA
+```{r}
+library(psych)
+
+describeBy(def$Price,def$sex)
+```
+

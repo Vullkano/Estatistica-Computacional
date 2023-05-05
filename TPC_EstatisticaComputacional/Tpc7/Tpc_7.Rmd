@@ -1,0 +1,152 @@
+---
+title: "Tpc_07"
+author: "Diogo Alexandre Alonso De Freitas"
+date: "2022-10-11"
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    theme: hpstr
+    highlight: github
+---
+##### Enunciado
+
+> Num inquérito sobre óculos de sol foram colocadas várias questões aos inquiridos. Para além 
+de características sociodemográficas (sexo, idade e nível de educação), perguntou-se o tipo 
+de óculos de sol que possuíam, quando tinham sido adquiridos, onde tinham sido adquiridos, 
+quanto tinham custado e se eram da marca SoleMio(SM/RB). 
+Para além destas questões, ainda foram colocadas outras que originaram a construção de 
+um conjunto de indicadores, cada um numa escala contínua de 0 a 10 – fatores que 
+influenciam a compra de óculos de sol.
+Para este TPC, irão apenas analisar duas questões: 1. O indicador “Importância da 
+Publicidade e Marketing na compra de óculos de sol” – variável Pub.Mk; e, 2. a questão 
+“are_RB”, que indica se os óculos são ou não da marca SoleMio
+Os “Fatores que influenciam a compra de óculos de sol” são variáveis que assumem valores 
+reais no intervalo 0-10, onde 0 corresponde a “nada importante” e 10 corresponde a 
+“extremamente importante”. 
+
+```{r}
+def <- readRDS("Estudo_Oculos_Sol.rds")
+def
+```
+
+#### Exercicio 1 
+
+> Pretende-se estimar a importância média concedida à Publicidade e Marketing (variável 
+Pub.Mk) enquanto fator de influência na compra de óculos de sol, através de um intervalo de
+confiança apropriado, a 99% de confiança.
+
+##### 1.1 -  Definir a variável em estudo
+
+A nossa variável de estudo será a seguinte:
+
+##### $$ X_1 -“A \ Importância \ da \ Publicidade \ e \ Marketing \ na \ compra \ de \ óculos \ de \ sol” – \ variável \ Pub.Mk $$
+
+##### 1.2 -  Identificar o parâmetro a estimar
+
+O objetivo é estimar a média real da população, já que apenas possuimos uma breve amostra da população total (amostra recolhida num inquério) e calcular a sua média será "irrelevante", pois, apenas demonstrará a média da amostra e não da população real, podendo assim dar uma ideia errada da realidade
+
+##### 1.3 - Escolher a variável fulcral conveniente para a estimação
+
+A variável fulcral conveniente para a estimação é a seguinte:
+
+$$VF =\frac{\overline X - \mu}{S'/ \sqrt n} \sim T_{(n-1)}$$
+
+##### 1.4 - Identificar o intervalo teórico (estimador)
+
+O intervalo teórico (estimador) é o seguinte:
+
+
+$$]I_{0.99}[_{\mu} \ = \ ]\overline X - z \frac{\sigma}{sqrt(n)},\ \overline X + z \frac{\sigma}{sqrt(n)}[ $$
+
+> Se recolhermos muitas amostras nas mesmas condições e para cada uma delas construirmos o $I$ concreto correspondente, de acordo com a expressão acima, esperamos que cerca de 99% desses intervalos contenham $\mu$ (mas não sabemos se ao concreto o que calculamos é um dos 99% dos "bons" ou um dos 1% "maus").
+
+##### 1.5 - Calcular os valores amostrais necessários
+
+Cálculo dos valores amostrais necessários:
+
+```{r}
+n <- length(def$Pub.Mk)
+sd_pub <- sd(def$Pub.Mk)
+z <- qnorm(0.005 ,lower.tail = FALSE)
+erro <- z*sd_pub/sqrt(n)
+LB <- mean(def$Pub.Mk) - erro
+UB <- mean(def$Pub.Mk) + erro
+# Se fizermos uma recolha de avaliações sobre este tema, sabemos que 99% das avaliações vão estar entre o seguinte intervalo
+c(LB, UB)
+```
+
+##### 1.6 - Construir o intervalo concreto (estimativa)
+
+$$]I_{0.99}[_{\mu}^{*} \ = \ ]`r round(LB, 2)`, `r round(UB,2)`[$$
+
+##### 1.7 - Interpretar o intervalo obtido
+
+> Com 99% de confiança, a verdadeira média (em termos de avaliação dos consumidores, de 0 a 10, da importância da Publicidade e Marketing na compra de óculos de sol) encontra-se entre `r round(LB, 2)` e `r round(UB,2)`.
+
+#### Exercicio 2
+
+> Repetir os passos 1 a 7 acima descritos para estimar a proporção de pessoas que possuem 
+óculos da marca Solemio (variável are_RB).
+
+```{r}
+sim_RB <- def$are_RB[which(def$are_RB == 'Yes')]
+
+nao_RB <- def$are_RB[which(def$are_RB == 'No')]
+
+SoleMio <- data.frame('Oculos totais' = length(def$are_RB), 'São da marca SoleMio' = length(sim_RB), 'Não são da marca SoleMio' = length(nao_RB))
+
+SoleMio[2,] <- 100
+SoleMio[2,]$São.da.marca.SoleMio <- length(sim_RB)/length(def$are_RB) * 100
+SoleMio[2,]$Não.são.da.marca.SoleMio <- length(nao_RB)/length(def$are_RB) * 100
+
+row.names(SoleMio) <- c("Valores Absolutos", "Valores Relativos")
+t(SoleMio)
+```
+
+##### 2.1 -  Definir a variável em estudo
+
+A nossa variável de estudo será a seguinte:
+
+##### $$ X_2 -“ Se \ os \ óculos \ são \ da \ marca \ SoleMio -> “are\_RB”$$
+
+##### 2.2 -  Identificar o parâmetro a estimar
+
+O objetivo é estimar a proporção de pessoas que possuem óculos da marca Solemio.
+
+##### 2.3 - Escolher a variável fulcral conveniente para a estimação
+
+A variável fulcral conveniente para a estimação é a seguinte:
+
+$$Variavel \ Fulcral_2 =\frac{\overline X - p}{\sqrt {p(1-p)/n}} \sim N{(0,1)}$$
+
+> Nota:
+Em populações Bernoulli, na construção do IC há que substituir $p(1−p)$ por $\overline x (1- \overline x))$, logo:
+
+
+$$VF_2 = \frac{\overline X - p}{\sqrt {\overline X (1- \overline X)/n}} \sim N{(0,1)}$$
+
+##### 2.4 - Identificar o intervalo teórico (estimador)
+
+$$]I_{0.99}[_{\mu} \ = \ ]\overline X - z \ \sqrt \frac{p(1-p)}{n},\ \overline X + z \ \sqrt \frac{p(1-p)}{n}[ $$
+
+##### 2.5 - Calcular os valores amostrais necessários
+
+```{r}
+n_2 <- length(def$are_RB)
+p_RB <- (length(sim_RB) / length(def$are_RB))
+z <- qnorm(0.005 ,lower.tail = FALSE)
+erro <- z*sqrt((p_RB*(1-p_RB))/n_2)
+LB_2 <- (length(sim_RB)/length(def$are_RB)) - erro
+UB_2 <- (length(sim_RB)/length(def$are_RB)) + erro
+c(LB_2, UB_2)
+```
+
+##### 2.6 - Construir o intervalo concreto (estimativa)
+
+$$]I_{0.99}[_{\mu}^{*} \ = \ ]`r round(LB_2, 2)`, `r round(UB_2,2)`[$$
+
+##### 2.7 - Interpretar o intervalo obtido
+
+> Com 99% de confiança, a verdadeira média (em termos da proporção de pessoas que possuem 
+óculos da marca Solemio) encontra-se entre `r round(LB, 2)` e `r round(UB,2)`.
+
